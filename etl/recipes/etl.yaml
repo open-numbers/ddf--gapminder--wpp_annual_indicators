@@ -1,0 +1,348 @@
+info:
+    id: ddf--unpop--wpp_annual_indicators
+    base:
+        - &un_pop Gapminder/ddf--unpop--wpp_population2019
+        - &gm_geo open-numbers/ddf--open_numbers
+
+config:
+    recipe_dir: ./
+    ddf_dir: /Users/semio/src/work/Gapminder/datasets/
+
+
+ingredients:
+    - id: unpop-datapoints-country-time
+      dataset: *un_pop
+      key: country, time
+      value: &indicators
+          - births
+          - cbr
+          - cdr
+          - child_dependency_ratio_1564
+          - child_dependency_ratio_2064
+          - child_dependency_ratio_2069
+          - child_dependency_ratio_2564
+          - child_dependency_ratio_2569
+          - deaths
+          - growthrate
+          - imr
+          - infant_deaths
+          - lex
+          - median_age
+          - natincr
+          - old_dependency_ratio_1564
+          - old_dependency_ratio_2064
+          - old_dependency_ratio_2069
+          - old_dependency_ratio_2564
+          - old_dependency_ratio_2569
+          - population
+          - population_change
+          - population_density
+          - population_natural_change
+          - potential_support_ratio_1564
+          - potential_support_ratio_2064
+          - potential_support_ratio_2069
+          - potential_support_ratio_2564
+          - potential_support_ratio_2569
+          - sex_ratio
+          - tfr
+          - total_dependency_ratio_1564
+          - total_dependency_ratio_2064
+          - total_dependency_ratio_2069
+          - total_dependency_ratio_2564
+          - total_dependency_ratio_2569
+          - u5mr
+
+    - id: unpop-datapoints-global-time
+      dataset: *un_pop
+      key: global, time
+      value: *indicators
+
+    - id: gm-geo-entities
+      dataset: *gm_geo
+      key: geo
+      value: "*"
+
+    - id: gm-countries
+      dataset: *gm_geo
+      key: country
+      value: "*"
+
+    - id: gm-country-synonym
+      dataset: *gm_geo
+      key: synonym, geo
+      value: "*"
+
+    - id: unpop-concepts
+      dataset: *un_pop
+      key: concept
+      value: "*"
+      filter:
+          concept: *indicators
+    - id: unpop-countries
+      dataset: *un_pop
+      key: country
+      value: "*"
+    - id: gm-geo-concepts
+      dataset: *gm_geo
+      key: concept
+      value: "*"
+    - id: concept-year
+      key: concept
+      data:
+        - concept: year
+          concept_type: time
+          name: Year
+
+
+cooking:
+    entities:
+        - procedure: serve
+          ingredients:
+              - gm-geo-entities
+    concepts:
+        - procedure: merge
+          ingredients:
+              - gm-geo-concepts
+              - unpop-concepts
+              - concept-year
+          options:
+              deep: true
+          result: final-concepts
+    datapoints:
+        # global
+        - procedure: translate_header
+          ingredients:
+              - unpop-datapoints-global-time
+          options:
+              dictionary:
+                  time: year
+          result: unpop-datapoints-global-year
+        - procedure: translate_column
+          ingredients:
+              - unpop-datapoints-global-year
+          options:
+              column: global
+              dictionary:
+                  '900': 'world'
+          result: &dp_global unpop-datapoints-global-year-translated
+
+        # country
+        - procedure: translate_header
+          ingredients:
+              - unpop-datapoints-country-time
+          options:
+              dictionary:
+                  time: year
+          result: unpop-datapoints-country-year
+
+        - procedure: translate_column
+          ingredients:
+              - unpop-countries
+          options:
+              column: name
+              target_column: country_gm
+              dictionary:
+                  base: gm-country-synonym
+                  key: synonym
+                  value: geo
+          result: unpop-countries-aligned
+
+        - procedure: translate_column
+          ingredients:
+              - unpop-datapoints-country-year
+          options:
+              column: country
+              target_column: country
+              dictionary:
+                  base: unpop-countries-aligned
+                  key: country
+                  value: country_gm
+          result: &dp_country unpop-datapoints-country_gm-year
+
+        # aggregation
+        # world_4region
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: world_4region
+          result: pop-datapoints-world_4region
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-world_4region
+          options:
+              dictionary:
+                  country: world_4region
+          result: pop-datapoints-world_4region-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-world_4region-translated
+          options:
+              groupby:
+                  - world_4region
+                  - year
+              aggregate:
+                  population: sum
+          result: &w4r pop-datapoints-by-world_4region
+
+
+        # world_6region
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: world_6region
+          result: pop-datapoints-world_6region
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-world_6region
+          options:
+              dictionary:
+                  country: world_6region
+          result: pop-datapoints-world_6region-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-world_6region-translated
+          options:
+              groupby:
+                  - world_6region
+                  - year
+              aggregate:
+                  population: sum
+          result: &w6r pop-datapoints-by-world_6region
+
+        # income_groups
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: income_groups
+          result: pop-datapoints-income_groups
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-income_groups
+          options:
+              dictionary:
+                  country: income_groups
+          result: pop-datapoints-income_groups-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-income_groups-translated
+          options:
+              groupby:
+                  - income_groups
+                  - year
+              aggregate:
+                  population: sum
+          result: &income_groups pop-datapoints-by-income_groups
+
+        # landlocked
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: landlocked
+          result: pop-datapoints-landlocked
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-landlocked
+          options:
+              dictionary:
+                  country: landlocked
+          result: pop-datapoints-landlocked-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-landlocked-translated
+          options:
+              groupby:
+                  - landlocked
+                  - year
+              aggregate:
+                  population: sum
+          result: &landlocked pop-datapoints-by-landlocked
+
+
+        # g77_and_oecd_countries
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: g77_and_oecd_countries
+          result: pop-datapoints-g77_and_oecd_countries
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-g77_and_oecd_countries
+          options:
+              dictionary:
+                  country: g77_and_oecd_countries
+          result: pop-datapoints-g77_and_oecd_countries-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-g77_and_oecd_countries-translated
+          options:
+              groupby:
+                  - g77_and_oecd_countries
+                  - year
+              aggregate:
+                  population: sum
+          result: &g77_and_oecd_countries pop-datapoints-by-g77_and_oecd_countries
+
+        # main_religion_2008
+        - procedure: translate_column
+          ingredients:
+              - *dp_country
+          options:
+              column: country
+              dictionary:
+                  base: gm-countries
+                  key: country
+                  value: main_religion_2008
+          result: pop-datapoints-main_religion_2008
+        - procedure: translate_header
+          ingredients:
+              - pop-datapoints-main_religion_2008
+          options:
+              dictionary:
+                  country: main_religion_2008
+          result: pop-datapoints-main_religion_2008-translated
+        - procedure: groupby
+          ingredients:
+              - pop-datapoints-main_religion_2008-translated
+          options:
+              groupby:
+                  - main_religion_2008
+                  - year
+              aggregate:
+                  population: sum
+          result: &main_religion_2008 pop-datapoints-by-main_religion_2008
+
+        - procedure: serve
+          ingredients:
+              - *dp_country
+              - *w4r
+              - *w6r
+              - *income_groups
+              - *landlocked
+              - *main_religion_2008
+              - *g77_and_oecd_countries
+              - *dp_global
