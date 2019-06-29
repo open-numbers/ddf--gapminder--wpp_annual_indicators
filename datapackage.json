@@ -1,19 +1,19 @@
 {
-    "name": "ddf--unpop--wpp_annual_indicators",
+    "name": "ddf--gapminder--wpp_annual_indicators",
     "language": {
         "id": "en"
     },
-    "title": "ddf--unpop--wpp_annual_indicators",
+    "title": "ddf--gapminder--wpp_annual_indicators",
     "description": "",
     "author": "",
     "license": "",
     "base": [
-        "working/ddf--unpop--wpp_population2019",
+        "Gapminder/ddf--unpop--wpp_population2019",
         "open-numbers/ddf--open_numbers"
     ],
     "id": "ddf--unpop--wpp_annual_indicators",
     "translations": [],
-    "created": "2019-06-24T01:10:01.196697+00:00",
+    "created": "2019-06-29T03:05:37.870407+00:00",
     "resources": [
         {
             "name": "ddf--concepts",
@@ -24,6 +24,9 @@
                         "name": "concept"
                     },
                     {
+                        "name": "color"
+                    },
+                    {
                         "name": "concept_type"
                     },
                     {
@@ -31,6 +34,12 @@
                     },
                     {
                         "name": "domain"
+                    },
+                    {
+                        "name": "drill_up"
+                    },
+                    {
+                        "name": "indicator_url"
                     },
                     {
                         "name": "name"
@@ -43,6 +52,9 @@
                     },
                     {
                         "name": "tags"
+                    },
+                    {
+                        "name": "unit"
                     }
                 ],
                 "primaryKey": "concept"
@@ -1981,6 +1993,15 @@
                 "primaryKey": [
                     "concept"
                 ],
+                "value": "color",
+                "resources": [
+                    "ddf--concepts"
+                ]
+            },
+            {
+                "primaryKey": [
+                    "concept"
+                ],
                 "value": "concept_type",
                 "resources": [
                     "ddf--concepts"
@@ -2000,6 +2021,24 @@
                     "concept"
                 ],
                 "value": "domain",
+                "resources": [
+                    "ddf--concepts"
+                ]
+            },
+            {
+                "primaryKey": [
+                    "concept"
+                ],
+                "value": "drill_up",
+                "resources": [
+                    "ddf--concepts"
+                ]
+            },
+            {
+                "primaryKey": [
+                    "concept"
+                ],
+                "value": "indicator_url",
                 "resources": [
                     "ddf--concepts"
                 ]
@@ -2036,6 +2075,15 @@
                     "concept"
                 ],
                 "value": "tags",
+                "resources": [
+                    "ddf--concepts"
+                ]
+            },
+            {
+                "primaryKey": [
+                    "concept"
+                ],
+                "value": "unit",
                 "resources": [
                     "ddf--concepts"
                 ]
